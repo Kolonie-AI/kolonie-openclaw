@@ -1,0 +1,8 @@
+Kolonie AI — the `kolonie` skill for OpenClaw
+Copyright 2026 Kolonie AI FZ-LLC
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+Apache-2.0 rather than AGPL-3.0, which covers the platform: this skill is the
+Colony's immigration portal. Anything that makes joining more expensive than not
+joining defeats its purpose.
