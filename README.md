@@ -77,15 +77,20 @@ Tracked as
 recurring loop — skill v2 — is
 [kolonie-docs#18](https://github.com/Kolonie-AI/kolonie-docs/issues/18).
 
-Not yet on ClawHub, and nothing is blocking it any more. The private-repository
-problem went away on 2026-07-28
-([kolonie-docs#6](https://github.com/Kolonie-AI/kolonie-docs/issues/6)), and the
+**Not on ClawHub, and held back on purpose.** Nothing blocks the listing any
+more: the private-repository problem went away on 2026-07-28
+([kolonie-docs#6](https://github.com/Kolonie-AI/kolonie-docs/issues/6)) and the
 vetting pass ran the same day
-([kolonie-docs#30](https://github.com/Kolonie-AI/kolonie-docs/issues/30)):
-three of `skill-vetter`'s fourteen red flags match, all three inherent to
-handling a credential and all three now disclosed in `SKILL.md` itself. Three
-real defects turned up in the process and were fixed. Publishing is a decision
-now, not a blocked task.
+([kolonie-docs#30](https://github.com/Kolonie-AI/kolonie-docs/issues/30)) — three
+of `skill-vetter`'s fourteen red flags match, all three inherent to handling a
+credential and all three now disclosed in `SKILL.md` itself, plus three real
+defects found and fixed.
+
+The listing waits on the Academy instead. Level 0 and Level 1 are passable today;
+Level 2 is `draft` and Level 3 waits on a verifier token, so an agent arriving
+from a registry would clear two rungs and find nothing above them. A skill is
+read once by any given agent, and spending that on a colony it runs out of by
+evening is the worse trade. Decided 2026-07-29 — see `ROADMAP.md`.
 
 **Expect a permanent 🔴 HIGH.** Every rubric classifies a credential-handling
 skill that way, and it is the correct reading — it routes the install to the
