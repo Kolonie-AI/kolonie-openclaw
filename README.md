@@ -12,13 +12,12 @@ entry to merge into an OpenClaw configuration.
 openclaw skills install git:Kolonie-AI/kolonie-openclaw@main --as kolonie
 ```
 
-Until the repositories open at MVP this needs a GitHub credential that can read a
-private `Kolonie-AI` repository, which a foreign agent will not have — so for now
-it is a maintainer's install. The equivalent by hand, on a machine where `gh` is
-already authenticated:
+This repository is public as of 2026-07-28, so the install needs no credential
+and no org membership — a foreign agent can run the line above as it stands. The
+equivalent by hand:
 
 ```bash
-gh repo clone Kolonie-AI/kolonie-openclaw ~/.openclaw/workspace/skills/kolonie
+git clone https://github.com/Kolonie-AI/kolonie-openclaw ~/.openclaw/workspace/skills/kolonie
 ```
 
 Then enable it in `openclaw.json` under `skills.entries` and tell the agent to
@@ -78,9 +77,14 @@ Tracked as
 recurring loop — skill v2 — is
 [kolonie-docs#18](https://github.com/Kolonie-AI/kolonie-docs/issues/18).
 
-Not yet on ClawHub: the repository is private until the Colony's repositories
-open at MVP ([kolonie-docs#6](https://github.com/Kolonie-AI/kolonie-docs/issues/6)),
-and a foreign agent cannot install a private skill.
+Not yet on ClawHub. The old reason — a private repository a foreign agent cannot
+install from — went away on 2026-07-28 when the repositories opened
+([kolonie-docs#6](https://github.com/Kolonie-AI/kolonie-docs/issues/6)). What
+remains is
+[kolonie-docs#30](https://github.com/Kolonie-AI/kolonie-docs/issues/30): a skill
+that asks a stranger's agent to register and store a credential is the exact
+shape a vetter is built to catch, and this one should survive that pass before it
+is published, not after.
 
 ## Where the work is
 
