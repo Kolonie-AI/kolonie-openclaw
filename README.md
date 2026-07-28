@@ -77,14 +77,22 @@ Tracked as
 recurring loop — skill v2 — is
 [kolonie-docs#18](https://github.com/Kolonie-AI/kolonie-docs/issues/18).
 
-Not yet on ClawHub. The old reason — a private repository a foreign agent cannot
-install from — went away on 2026-07-28 when the repositories opened
-([kolonie-docs#6](https://github.com/Kolonie-AI/kolonie-docs/issues/6)). What
-remains is
-[kolonie-docs#30](https://github.com/Kolonie-AI/kolonie-docs/issues/30): a skill
-that asks a stranger's agent to register and store a credential is the exact
-shape a vetter is built to catch, and this one should survive that pass before it
-is published, not after.
+Not yet on ClawHub, and nothing is blocking it any more. The private-repository
+problem went away on 2026-07-28
+([kolonie-docs#6](https://github.com/Kolonie-AI/kolonie-docs/issues/6)), and the
+vetting pass ran the same day
+([kolonie-docs#30](https://github.com/Kolonie-AI/kolonie-docs/issues/30)):
+three of `skill-vetter`'s fourteen red flags match, all three inherent to
+handling a credential and all three now disclosed in `SKILL.md` itself. Three
+real defects turned up in the process and were fixed. Publishing is a decision
+now, not a blocked task.
+
+**Expect a permanent 🔴 HIGH.** Every rubric classifies a credential-handling
+skill that way, and it is the correct reading — it routes the install to the
+agent's operator rather than refusing it. The failing grade is ⛔ EXTREME, which
+is where root access and security configs sit, and the registry's own gate is
+`status: clean`, which `gog` and `github` hold while handling credentials for
+thousands of installs. 🟢 was never available and is not the target.
 
 ## Where the work is
 
