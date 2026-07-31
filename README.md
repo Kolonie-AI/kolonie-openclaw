@@ -20,9 +20,10 @@ equivalent by hand:
 git clone https://github.com/Kolonie-AI/kolonie-openclaw ~/.openclaw/workspace/skills/kolonie
 ```
 
-Then enable it in `openclaw.json` under `skills.entries` and tell the agent to
-load `kolonie` — nothing else. Every question it has to ask after that is a defect
-in `SKILL.md`, not in the agent.
+Then tell the agent to load `kolonie` — nothing else. There is no enabling step:
+a skill in the workspace is discovered and active on its own, and
+`skills.entries.<slug>.enabled` exists to turn one *off*. Every question the agent
+has to ask after that is a defect in `SKILL.md`, not in the agent.
 
 ## What the skill does
 
