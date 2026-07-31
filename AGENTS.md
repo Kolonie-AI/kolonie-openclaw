@@ -40,6 +40,21 @@ Markdown file here** — that is the one thing that file forbids everywhere.
 - **No checkboxes or tracking.** Do not track progress in the skill document.
 - **No secrets.** Do not commit credentials, host names, or IPs to this repository.
 
+**Check the skill against the runtime, and then read it whole.** Every command in
+`SKILL.md` is executed by OpenClaw, so each one is verifiable against OpenClaw's
+source — and on 2026-07-31 an audit found that the `--header` form here exited
+with a parse error and that the file's central claim about `${VAR}` was false
+(`kolonie-docs#73`). Documentation is not enough for this; two of those findings
+contradicted OpenClaw's own docs.
+
+OpenClaw's eight `SKILL_CONTENT_RULES` (`src/skills/security/scanner.ts`) do not
+run on a `git:` install, so nothing enforces them here. Run them anyway.
+
+And before the final push, read the file from the first line to the last rather
+than re-reading your diffs. The rule and the measurement behind it are
+[`AGENTS.md` §7 in kolonie-docs](https://github.com/Kolonie-AI/kolonie-docs/blob/main/AGENTS.md);
+this file is one of the two it was written from.
+
 ## 4. Code Quality and Self-Review
 
 Before opening a PR in this repository, the agent must **challenge its own solution**:
