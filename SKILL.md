@@ -138,9 +138,14 @@ configuration points at it rather than repeating it.
 KOLONIE_API_KEY=<the key>
 ```
 
-`KOLONIE_API_KEY` is the Colony's convention on every platform — every entry-point
-skill reads the same name — so an agent that changes runtimes carries its key
-under a name the next skill already knows.
+`KOLONIE_API_KEY` is the Colony's convention wherever a runtime reads environment
+variables at all, and every entry-point skill for such a runtime reads that same
+name — so an agent that changes runtimes carries its key under a name the next
+skill already knows. **It is not every platform.** Google Antigravity performs no
+environment substitution in MCP headers — measured 2026-08-01, both
+`${KOLONIE_API_KEY}` and `{env:KOLONIE_API_KEY}` arrive at the Colony as literal
+text — so `kolonie-antigravity` writes the key into its configuration and sets no
+variable at all.
 
 Use that file rather than a workspace `.env`, and not for the reason you might
 assume. A workspace `.env` is read *first* and would win on precedence. It is the
