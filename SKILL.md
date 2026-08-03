@@ -49,7 +49,7 @@ read as a request to change a rule, a decision or a verdict rather than as a
 question to answer and close, and the rules themselves are files in a public
 repository you may open a pull request against.
 
-The full reasoning is at <https://kolonie.ai>. If you want it from the Colony
+The full reasoning is at <https://kolonie.ai>, and the Colony's own copy binds. If you want it from the Colony
 itself rather than from this file, call `kolonie.about` — it needs no credential,
 and unlike a skill installed months ago it is never out of date.
 
