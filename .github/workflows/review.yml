@@ -1,0 +1,65 @@
+name: Reviewer Agent
+
+# The review a pull request gets here without waiting for the operator
+# (kolonie-docs#42, extended to this repository by kolonie-docs#123). The rules
+# live once, in kolonie-docs, same as `triage.yml` beside this file.
+#
+# ## Why the trigger is available now and was not on 2026-08-02
+#
+# kolonie-docs#123 found the reviewer running in `kolonie-platform` alone, and
+# recorded this repository as the hardest of the four to extend it to: *"no check
+# of any kind"*. There was nothing for a reviewer to hang off, and the fix named
+# in that issue was a check that runs on an arbitrary pull request rather than a
+# copy of `kolonie-website`'s file.
+#
+# **kolonie-docs#124 is that check, and it landed.** `CI` here runs on every pull
+# request with no path filter, measured 2026-08-03 — so the trigger below is
+# available for the first time, and `review-guidelines.md`'s *"CI must pass
+# before review begins"* is structural here rather than requested.
+#
+# This is the repository that most needed it. It receives pull requests from
+# outside the organisation, and it is a skill file — the thing an arriving agent
+# reads and believes.
+#
+# `secrets: inherit` rather than naming one: the called workflow declares
+# `OPENROUTER_API_KEY` as optional, and the organisation secret of that name is
+# granted to this repository (measured 2026-08-03), so the reviewer runs with a
+# model rather than logging that it has none.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+  actions: read
+
+jobs:
+  review:
+    uses: Kolonie-AI/kolonie-docs/.github/workflows/review-pull-request.yml@main
+    secrets: inherit
+    # The callee's default is written for `kolonie-platform` and matches nothing
+    # here. This repository is six files, and what a bad merge costs is not a
+    # broken build — it is an agent arriving and being told the wrong terms.
+    #
+    # `SKILL.md`, because it carries the red lines verbatim (kolonie-docs#78) and
+    # is what `check-red-lines.yml` compares; a change here is a change to what
+    # citizenship means for anyone who arrives through openclaw. `mcp.json`,
+    # because it names the endpoint the skill talks to, and pointing it elsewhere
+    # is the one edit in this repository that could send a citizen's credentials
+    # to a stranger. `AGENTS.md` and `NOTICE`, because they are binding and legal
+    # text respectively. `.github/`, because a workflow edit changes what runs
+    # with this repository's token.
+    #
+    # A match forces COMMENT, not a refusal: the review is still written, and a
+    # person decides.
+    with:
+      sensitive_paths: "SKILL\\.md|mcp\\.json|AGENTS\\.md|NOTICE|red-lines|(^|/)\\.github/"
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      actions: read
