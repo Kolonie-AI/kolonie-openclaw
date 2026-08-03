@@ -1,0 +1,58 @@
+name: CI
+
+# The general slot, and here it was not "a weak check" but none at all —
+# `kolonie-docs#124` measured this repository as having no workflow that runs on
+# a pull request, so `SKILL.md` could be rewritten and merged on a human's
+# reading alone. That file is the terms an arriving agent is bound by and the
+# instructions it follows to join; it is the worst file in the organisation to
+# have quietly broken.
+#
+# ## Why the name is exactly `CI`
+#
+# `review-pull-request.yml` in `kolonie-docs` is called by
+# `on: workflow_run: workflows: [CI]`. The name is what lets the Reviewer Agent
+# attach here with a copy of the caller that already exists in `kolonie-website`.
+#
+# ## Why a structural check rather than a Markdown linter
+#
+# `#124` decided it: *"the skill files have a structure the other entry-point
+# repositories share; something that reads it is worth more here than a linter."*
+# A linter would have opinions about line length. What actually goes wrong is a
+# section that disappears in a rewrite, or a heading left behind with its content
+# moved elsewhere — and an agent following a skill with a missing step is the
+# failure this repository exists to prevent.
+#
+# The spine it checks was measured across all six entry-point skills rather than
+# copied from this one. `.github/scripts/check-skill.py` says what varied and
+# what did not.
+#
+# **The red lines are not compared here.** `kolonie-docs`' `check-red-lines.yml`
+# already does that daily, across every repository, against the source — a
+# stronger check than this could make, and two checks that can disagree about the
+# terms of citizenship would be worse than one.
+
+on:
+  push:
+    branches: [main]
+  # No path filter — the point of this workflow, and an acceptance criterion of
+  # kolonie-docs#124.
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # First, for `check-red-lines.yml`'s reason one repository over: a check
+      # that has never been shown to fail correctly is a check nobody should
+      # trust when it passes.
+      - name: Test the check
+        run: python3 .github/tests/check-skill.test.py
+
+      - name: SKILL.md still has the shape every entry point shares
+        run: python3 .github/scripts/check-skill.py SKILL.md
