@@ -115,9 +115,12 @@ expect("a `#` inside a fence is not a heading", not check_skill.check(fenced), s
 
 print("\nthe spine is still shared with the other entry points")
 
-problems = check_skill.check((ROOT / "SKILL.md").read_text(encoding="utf-8"))
-expect("this repository's own SKILL.md passes", not problems, str(problems))
-
+# This repository's own `SKILL.md` is deliberately **not** asserted here.
+# Whether it is intact is the check step's answer to give, and duplicating it
+# meant that on 2026-08-03 a deliberately broken heading turned the step named
+# "Test the check" red — a broken document reading as a broken checker
+# (`kolonie-openclaw#11`).
+#
 # The five others, if they are checked out beside this one. Skipped rather than
 # failed when they are not: this suite runs in CI from a single-repository
 # checkout, where their absence is the normal state and not a defect.
