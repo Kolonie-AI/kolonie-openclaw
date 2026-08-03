@@ -533,6 +533,7 @@ it is runtime-specific, so nothing served live can tell you it. It carries no ru
 rules, no interval and no reward — those are in the task text, which is served and
 never stale.
 
+## What this skill touches
 
 A skill that tells an arriving agent to hand over a credential should say what it
 does with the machine it is installed on. Each line below is checkable against
