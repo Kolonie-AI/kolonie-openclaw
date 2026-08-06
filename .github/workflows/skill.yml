@@ -1,0 +1,142 @@
+name: Skill
+
+# `SKILL.md` in this repository is **generated**. The Colony-facing half of it
+# lives once, in `kolonie-docs` at `onboarding/skill/body.md`; what is genuinely
+# this runtime's own lives here in `skill.runtime.md`; and
+# `kolonie-docs/.github/scripts/build-skill.py` joins the two.
+#
+# `kolonie-docs#171` is why. Measured 2026-08-05, the join path existed in nine
+# places, six of them maintained by hand, with a 344-line spread and a 7-versus-19
+# spread on how much each said about the operator relationship. Nobody decided
+# that. The decision taken there was **generate** rather than test, because a test
+# tells six repositories they disagree and does not write the sentence.
+#
+# ## The two jobs, and why they are two
+#
+# **`check`** runs on every pull request and answers one question: is the
+# `SKILL.md` in this tree what the body and `skill.runtime.md` generate? A hand
+# edit to the generated file is the failure this whole split exists to prevent,
+# and it is silent — the file reads as an ordinary skill to whoever installs it.
+#
+# **`sync`** runs on a schedule, regenerates, and opens a pull request when the
+# shared body has moved. It does **not** merge. A change to the Colony-facing text
+# arrives in seven repositories at once, and a human deciding that seven times is
+# the check on it.
+#
+# ## Two consequences that look like defects and are not
+#
+# **`check` couples this repository to `kolonie-docs@main`.** When the body moves,
+# pull requests here go red until `sync` lands. That is the same trade
+# `kolonie-docs`' own CI takes for the red-line copies and it is taken for the same
+# reason: the divergence is otherwise silent, and a repository whose pull requests
+# are blocked until the copies agree is a repository that fixes them.
+#
+# **No third-party action is used to open the pull request.** `git` and `gh` are
+# already here, and `kolonie-docs#142` requires a third-party action in a
+# write-access workflow to be pinned to a full commit SHA — a maintenance cost this
+# does not need to take on for two commands. A pull request opened with
+# `GITHUB_TOKEN` does not itself trigger `check`; that is acceptable here, because
+# the job that opened it had just regenerated the file.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    # Daily, on a minute of this repository's own, so seven runtime repositories
+    # do not all read `kolonie-docs` in the same second.
+    - cron: "41 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: SKILL.md is what the shared body generates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Kolonie-AI/kolonie-docs
+          path: .kolonie-docs
+
+      # The generator is tested before it is trusted, which is `check-red-lines.yml`'s
+      # rule in `kolonie-docs`: a check nobody has seen fail correctly is a check
+      # nobody should trust when it passes.
+      - name: Test the generator
+        run: python3 .kolonie-docs/.github/tests/build-skill.test.py
+
+      - name: Regenerating produces no diff
+        run: |
+          python3 .kolonie-docs/.github/scripts/build-skill.py \
+            .kolonie-docs/onboarding/skill/body.md \
+            skill.runtime.md \
+            SKILL.md \
+            --check
+
+  sync:
+    name: Open a pull request when the shared body has moved
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Kolonie-AI/kolonie-docs
+          path: .kolonie-docs
+
+      - name: Regenerate
+        run: |
+          python3 .kolonie-docs/.github/scripts/build-skill.py \
+            .kolonie-docs/onboarding/skill/body.md \
+            skill.runtime.md \
+            SKILL.md
+
+      - name: Open a pull request if it changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- SKILL.md; then
+            echo "The shared body has not moved since this file was generated."
+            exit 0
+          fi
+          BRANCH="skill-sync/$(cd .kolonie-docs && git rev-parse --short HEAD)"
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "$BRANCH already exists — a pull request for this body is already open."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add SKILL.md
+          git commit -F - <<'MESSAGE'
+          Regenerate SKILL.md from the shared body
+
+          The Colony-facing half of this file moved in kolonie-docs. Regenerated by
+          .github/workflows/skill.yml; kolonie-docs#171 is why this file is
+          generated rather than edited.
+          MESSAGE
+          git push origin "$BRANCH"
+          gh pr create --head "$BRANCH" --base main \
+            --title "Regenerate SKILL.md from the shared body" \
+            --body-file - <<'BODY'
+          `onboarding/skill/body.md` in `kolonie-docs` has moved, so the generated
+          `SKILL.md` here is behind it. This pull request is the regenerated file and
+          nothing else.
+
+          **Review the diff, not the process.** What is in it was written in
+          `kolonie-docs`, and it arrives as a pull request rather than a push because
+          the same change is landing in seven repositories at once
+          ([kolonie-docs#171](https://github.com/Kolonie-AI/kolonie-docs/issues/171)).
+
+          If something here is wrong for this runtime, the fix is in `skill.runtime.md`
+          or in the shared body — never in `SKILL.md`, which is an output.
+          BODY

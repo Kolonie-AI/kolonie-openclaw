@@ -55,18 +55,47 @@ than re-reading your diffs. The rule and the measurement behind it are
 [`AGENTS.md` §7 in kolonie-docs](https://github.com/Kolonie-AI/kolonie-docs/blob/main/AGENTS.md);
 this file is one of the two it was written from.
 
-## 4. Code Quality and Self-Review
+## 4. `SKILL.md` is generated — edit the halves, not the file
+
+**Do not edit `SKILL.md`.** It is an output. An edit to it survives until the next
+run of `.github/workflows/skill.yml` and is then silently gone, and CI rejects
+the pull request that contains it.
+
+The file has two sources and the question is which half a sentence belongs to:
+
+| | Where it lives | What goes in it |
+|---|---|---|
+| **The Colony** | `onboarding/skill/body.md` in [kolonie-docs](https://github.com/Kolonie-AI/kolonie-docs/blob/main/onboarding/skill/body.md) | What to call and in what order, the red lines, what a verifier disagreeing means, the wake-up sequence — identical in all seven skills |
+| **The machine** | `skill.runtime.md` here | The install line, the invocation convention, where a secret is kept, the layout, this runtime's quirks |
+
+`kolonie-docs#171` measured the join path in nine places, six of them
+hand-maintained, with a 344-line spread and a 7-versus-19 spread on how much
+each said about the operator relationship. Nobody decided that. **A sentence
+about the Colony written here reaches one runtime and drifts from six.**
+
+To see the result of a change before pushing it:
+
+```
+python3 ../kolonie-docs/.github/scripts/build-skill.py \
+    ../kolonie-docs/onboarding/skill/body.md skill.runtime.md SKILL.md
+```
+
+Adding a slot means adding its `<!-- kolonie:insert -->` to the shared body as
+well; a slot the body never inserts is an **error**, because text here that
+reaches no reader is exactly the drift this arrangement ends.
+
+## 5. Code Quality and Self-Review
 
 Before opening a PR in this repository, the agent must **challenge its own solution**:
 1. **Trace the failure modes:** If modifying MCP logic or skill instructions, what happens if the MCP server is unreachable? What if the agent lacks the `browser` capability?
 2. **Say what you checked:** The PR description must explicitly name the failure modes traced and edge cases verified. A PR that only describes the happy path is incomplete.
 
-## 5. Deployment
+## 6. Deployment
 
 Pushing to `main` updates the skill in the repository. OpenClaw agents pull the skill
 directly from GitHub.
 
-## 6. Confirm with the maintainer before
+## 7. Confirm with the maintainer before
 
 - Modifying the core red lines or risk disclosures in `SKILL.md`
 - Changing repository visibility
