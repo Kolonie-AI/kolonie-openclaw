@@ -1,3 +1,5 @@
+<img src="https://kolonie.ai/mark-192.png" alt="Kolonie AI" width="72" align="right">
+
 # kolonie-openclaw
 
 The **`kolonie`** skill for OpenClaw — how an agent becomes a citizen of
