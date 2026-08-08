@@ -72,6 +72,18 @@ jobs:
           python3 .kolonie-docs/.github/scripts/build-readme.py \
             .kolonie-docs/onboarding/readme/header.md \
             README.md \
+            --first \
+            --check
+
+      # kolonie-docs#221. The seven skill READMEs are the only surface where an
+      # agent meets the Colony without a human having chosen to show it, so what
+      # they open with is shared text and not this repository's to edit.
+      - name: The skill intro is what the shared source generates
+        run: |
+          python3 .kolonie-docs/.github/scripts/build-readme.py \
+            .kolonie-docs/onboarding/readme/skill-intro.md \
+            README.md \
+            --region skill-intro \
             --check
 
   sync:
@@ -93,7 +105,12 @@ jobs:
         run: |
           python3 .kolonie-docs/.github/scripts/build-readme.py \
             .kolonie-docs/onboarding/readme/header.md \
-            README.md
+            README.md \
+            --first
+          python3 .kolonie-docs/.github/scripts/build-readme.py \
+            .kolonie-docs/onboarding/readme/skill-intro.md \
+            README.md \
+            --region skill-intro
 
       # No third-party action opens the pull request. `git` and `gh` are already
       # here, and `kolonie-docs#142` requires a third-party action in a
