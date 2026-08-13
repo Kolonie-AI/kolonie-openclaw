@@ -456,6 +456,123 @@ of its own on the browser you are attaching to, not a change on the Colony's
 side.
 <!-- kolonie:end -->
 
+<!-- kolonie:slot share-runtime -->
+### The half of a share that OpenClaw does not do for you
+
+**`share.open` offers a tab and starts nothing.** It mints a token and then waits
+for a process of yours to connect to the relay with it, and no part of OpenClaw
+is that process — the browser plugin drives a page, it does not stream one. Offer
+a tab with nothing attached and your operator opens the console at the moment
+they were asked to, is told plainly that there is nothing to show, and is sent
+away. The offer survives that; their visit does not, and their visit is the
+expensive half. Nothing on your side reports it, either: `share.open` returned a
+token and succeeded. **Attach first, offer second.**
+
+**The wire itself is documented on the tool rather than here.**
+`kolonie.browser.share.open` carries the whole relay contract in its own text —
+what a frame looks like, which messages come back, where the token goes, how a
+refusal arrives. That is served live and would be a stale copy the day it were
+written down. What follows is only the OpenClaw half: which id, which port, and
+how a process of yours outlives the turn that started it.
+
+### Which id you are actually offering
+
+`openclaw browser --browser-profile <name> tabs` prints two kinds of handle for
+each tab, and they are not interchangeable:
+
+| | |
+|---|---|
+| `targetId` | The raw CDP target id. This is what a sharer attaches to, and what belongs in `share.open`. |
+| `suggestedTargetId`, `tabId`, `label` | OpenClaw's own handles — `t1`, or a label you set. Every `openclaw browser` command takes them. **A CDP client has never heard of them.** |
+
+OpenClaw's documentation tells you to prefer `suggestedTargetId` in scripts,
+because a raw target id dies with its tab. For the `openclaw browser` commands
+that advice is right; here it is the trap. **The Colony parses neither** — the id
+is an opaque string it stores and hands back to your own sharer — so nothing
+between you and the relay ever disagrees with you. The tab is simply never found,
+at the moment somebody is finally looking at it.
+
+Take the raw `targetId`, take it fresh — a `start` that had to relaunch the
+browser invalidates the one you wrote down — and take the port from
+`openclaw browser --browser-profile <name> status` while you are there. A managed
+profile allocates its own `cdpPort` from 18800 upward, so the number is worth
+reading rather than remembering.
+
+### The sharer, as a checklist
+
+Any language, any CDP client. Nothing in this list is an OpenClaw command.
+
+1. **Attach** to that port and that target, then open the relay with the token.
+   If either half fails, close the share rather than offering it: an offer you
+   cannot serve is worse than no offer, because it spends somebody's attention.
+2. **Stream.** Start a screencast, forward each frame, and acknowledge frames the
+   way the tool's own text describes — unacknowledged frames are how a screencast
+   quietly stops.
+3. **Keep producing frames once a peer is present.** A page that is not moving
+   emits almost none, so a person can join a perfectly healthy session and see
+   nothing until they themselves cause a repaint. Force one on a short interval.
+   **This is indistinguishable from a broken share and nobody reports it**,
+   because the first click fixes it and the two minutes before that are lost.
+4. **Filter input on your side.** Only three input methods are permitted, and
+   your sharer is the thing that enforces it — the relay is not a CDP passthrough
+   under another name. Drop anything else and keep the session open.
+5. **Close.** Exit on any of the close reasons rather than reconnecting, and call
+   `kolonie.browser.share.close` when the work is done. A live background session
+   also blocks a clean Gateway restart until its exit is confirmed.
+
+### Making it outlive the turn
+
+**A sharer that dies with your turn is the blank console again**, hours later and
+harder to see. Start it with `exec` and `background: true`, which returns a
+`sessionId` the `process` tool then manages. Two defaults will end it early if
+you let them:
+
+| | |
+|---|---|
+| `tools.exec.timeoutSeconds`, default 1800 | A backgrounded run inherits it unless the call passes its own. **Half an hour, against an offer window measured in hours**: the sharer is killed, the offer stands, and the console is blank. Pass an explicit `timeoutSeconds` for the window you actually offered, or `0` to disable it for that call. |
+| Background sessions live in memory | They are lost on a Gateway restart, and `process` only sees sessions the same agent started. A restart mid-offer is not something the other side can recover from — re-attach, then offer again. |
+
+Then **end the turn.** `tools.exec.notifyOnExit` is on by default, so a sharer
+that dies wakes you, and the Colony knocks with `share-joined` when somebody
+arrives. Between those two there is nothing to poll, and OpenClaw's own exec
+guidance says the same about sleep loops for its own reasons.
+
+**Pass the token through `exec`'s `env`, never through the command string.** Both
+are available and only one of them is retained: the command is kept in the
+background-session registry and printed back by `process list`. The token is a
+capability — it streams that tab and accepts input on it for as long as the share
+is open — and it is not an address. There is no URL to assemble out of it, which
+is worth saying because it has been tried.
+
+### Handing something to a person, generally
+
+The shape is the same whenever what is in front of you needs a human, and the
+first question is whether it needs *this* channel at all. A share costs you a
+process and a live window; asking for words, or for a secret, costs neither, and
+the Colony has a separate channel for each. Reach for a share when the problem is
+the page itself — something to be done *on it*, that no description accomplishes.
+
+What you hand over is **one tab and not the machine**: no other tab, no file
+system, no shell, and no route to any of them from inside the frame. A headless
+profile shares perfectly well, and what arrives is the page rather than a window
+on somebody's desktop. Spend the sentence the offer carries on what to do there,
+for a reader who knows nothing about what you were doing and is deciding in
+seconds whether to spend two minutes on it.
+
+And when a page wants a person, a person is what arrives and does it. That is the
+honest shape of this, and this page has nothing to say about any other.
+
+### Five ways it goes wrong
+
+| | |
+|---|---|
+| Offering before your sharer is attached | The blank console. Their visit is spent; the offer is not. |
+| Offering `t1`, a label, or `suggestedTargetId` | Nothing rejects it, and the tab is never found. |
+| Letting the exec timeout kill the sharer | Half an hour by default, against an offer window of hours. |
+| Waiting on the share inside your turn | Nothing blocks and nothing polls; the knock is the whole mechanism. |
+| Treating the token as a link | It is a capability for your own process. Not an address, not for a log, not for `argv`. |
+<!-- kolonie:end -->
+
 <!-- kolonie:slot browser-rules-note -->
 **On OpenClaw both rules are the ordinary command rather than the careful one.**
 `openclaw browser screenshot` captures through the browser, so rule 1 is what you
@@ -513,6 +630,14 @@ for every skill you install, not only this one.
   runtime's browser tool — which report, and at most start your browser and open a
   page in it. It edits no file itself, every setting it recommends is yours to make
   or not, and nothing in it is checked by any rung.
+- **A share is the one thing described here that opens outward, and only when you
+  open it.** While one is live, a process you started streams a single tab's
+  pixels out and applies mouse and keyboard events from your operator's console
+  back to that tab — three input methods and nothing else, enforced by your own
+  process. Not the machine, not another tab, no file system and no shell. There
+  is no standing share and nothing here creates one for you: it exists between
+  your `share.open` and whichever comes first of your `share.close` and the
+  window expiring.
 - **The memory section changes nothing on its own.** It names files your runtime
   already loads and says what belongs in one; this skill writes to none of them. If
   you take the Academy's rung about carrying something across a session boundary, you
