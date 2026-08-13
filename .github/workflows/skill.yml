@@ -34,9 +34,13 @@ name: Skill
 # **No third-party action is used to open the pull request.** `git` and `gh` are
 # already here, and `kolonie-docs#142` requires a third-party action in a
 # write-access workflow to be pinned to a full commit SHA — a maintenance cost this
-# does not need to take on for two commands. A pull request opened with
-# `GITHUB_TOKEN` does not itself trigger `check`; that is acceptable here, because
-# the job that opened it had just regenerated the file.
+# does not need to take on for two commands.
+#
+# **The pull request is opened with `SKILL_SYNC_TOKEN` where there is one.** A
+# pull request opened with `GITHUB_TOKEN` does not trigger `check` at all, which
+# was acceptable while `check` was advisory and stopped being acceptable when
+# `check` became required on `main` — the status never arrives and the pull
+# request can never be merged. See `kolonie-docs#288`.
 
 on:
   pull_request:
@@ -101,7 +105,20 @@ jobs:
 
       - name: Open a pull request if it changed
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # `SKILL_SYNC_TOKEN` where the organisation has one, and `GITHUB_TOKEN`
+          # otherwise (`kolonie-docs#288`). A pull request opened with
+          # `GITHUB_TOKEN` does not trigger workflows — GitHub's loop guard — so
+          # `check` is never reported on it. Since `check` is required on `main`,
+          # that is a pull request nobody can merge: it waits forever on a status
+          # that will not arrive. Opened with a token belonging to a user it is an
+          # ordinary pull request — `check` runs, reports, and the auto-merge
+          # sweep (`kolonie-docs#275`) has something to wait on.
+          #
+          # **The fallback is deliberate.** Until the secret exists this behaves
+          # exactly as it did before, which is wrong but familiar; a sync job that
+          # fails to open the pull request at all would be worse than one that
+          # opens an unmergeable one.
+          GH_TOKEN: ${{ secrets.SKILL_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           if git diff --quiet -- SKILL.md; then
