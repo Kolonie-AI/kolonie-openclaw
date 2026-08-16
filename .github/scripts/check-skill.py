@@ -2,6 +2,7 @@
 """Does `SKILL.md` still have the shape every entry-point skill shares?
 
 Usage: python3 .github/scripts/check-skill.py [SKILL.md]
+       python3 .github/scripts/check-skill.py --entry-points <dir-of-checkouts>
 
 `kolonie-docs#124` measured that this repository ran **no check at all** on a
 pull request, and decided what should fill the slot here rather than a linter:
@@ -29,6 +30,17 @@ there and that it is last of the numbered steps, which is the property the
 document actually depends on: `kolonie-docs#102` is explicit that an agent that
 registers and never returns has not immigrated.
 
+**Nor is what a step's heading says after its name.** `#21`: *"1. Connect"* was
+the one spine entry compared as a whole line, which made it the odd one out —
+its two neighbours already tolerate both a different number and a trailing
+qualifier, and the paragraph above already declared the numbers uncompared. The
+heading that caught it is `kolonie-claude`'s *"1. Connect — the plugin has
+already done this"*, which is true of that runtime and does not make the section
+a different section: an agent reading it still arrives at the same place in the
+same order. So a step matches on its number and its name, and what follows is
+the runtime's own. The three non-step sections either side stay exact, because
+none of them names an act a runtime can have performed differently.
+
 **`kolonie-skill` writes *"What this assumes you can do"*** where the six write
 *"What you need"*. It is the same section under a different name and it is not
 one of the six, so the six's name is what is required; the alternative is
@@ -45,6 +57,21 @@ promising something that is not there.
 `check-red-lines.yml` compares it against `governance/red-lines.md` daily and
 across every repository, which is a stronger check than anything this file could
 make, and duplicating it would mean two checks that can disagree.
+
+## Where the spine is asserted across repositories
+
+`--entry-points <dir>` checks every skill in `ENTRY_POINTS` under one directory,
+and `.github/workflows/spine.yml` runs it daily against fresh checkouts. Until
+`#21` the only cross-repository assertion was in the test suite, which skips the
+siblings when they are absent — so it ran on a maintainer's machine and nowhere
+else, and `kolonie-claude`'s heading had been failing there with nobody told.
+
+`ENTRY_POINTS` is that set, in one place, so the suite and the workflow cannot
+drift apart: a repository added here without a checkout step beside it turns the
+scheduled run red naming the file it could not find, rather than being skipped.
+`kolonie-skill` is deliberately not in it — it is not an entry point, and the
+spine is the intersection of the six. What this file does for it is accept its
+name for *"What you need"* so it can be lifted there unchanged.
 """
 
 from __future__ import annotations
@@ -63,7 +90,8 @@ SPINE: list[tuple[str, object]] = [
     ("Red lines", lambda h: h == "Red lines"),
     # kolonie-skill renames this one; see the header.
     ("What you need", lambda h: h in ("What you need", "What this assumes you can do")),
-    ("1. Connect", lambda h: h == "1. Connect"),
+    # The step number and the qualifier after the name both vary; see the header.
+    ("N. Connect", lambda h: re.fullmatch(r"\d+\. Connect\b.*", h) is not None),
     # The step number varies between the six, the wording does not.
     ("N. Store the key", lambda h: re.fullmatch(r"\d+\. Store the key\b.*", h) is not None),
     ("N. Come back", lambda h: re.fullmatch(r"\d+\. Come back\b.*", h) is not None),
@@ -71,6 +99,18 @@ SPINE: list[tuple[str, object]] = [
     ("What this skill touches", lambda h: h == "What this skill touches"),
     ("Licence", lambda h: h == "Licence"),
 ]
+
+# The six entry-point skills, as repository -> path to the skill within it. This
+# repository is one of them; its own file is checked here so that a scheduled run
+# has no hole where `ci.yml` was green under an older spine.
+ENTRY_POINTS: dict[str, str] = {
+    "kolonie-openclaw": "SKILL.md",
+    "kolonie-claude": "skills/kolonie/SKILL.md",
+    "kolonie-kilo": "skills/kolonie/SKILL.md",
+    "kolonie-hermes": "skills/kolonie/SKILL.md",
+    "kolonie-codex": "skills/kolonie/SKILL.md",
+    "kolonie-antigravity": "skills/kolonie/SKILL.md",
+}
 
 
 def sections(text: str) -> list[tuple[int, int, str, str]]:
@@ -156,7 +196,38 @@ def check(text: str) -> list[str]:
     return problems
 
 
+def check_entry_points(root: Path) -> list[str]:
+    """Every skill in `ENTRY_POINTS`, under one directory of checkouts.
+
+    A missing file is a problem rather than a skip. Here the checkouts are the
+    workflow's own doing, so absence means the workflow and `ENTRY_POINTS`
+    disagree — which is the one thing a cross-repository check must not do
+    quietly. The test suite skips instead, and for the opposite reason: there,
+    absence is the normal state of a single-repository checkout.
+    """
+    problems: list[str] = []
+    for repo, rel in ENTRY_POINTS.items():
+        path = root / repo / rel
+        if not path.exists():
+            problems.append(f"{repo}: {rel} is not checked out under {root} — nothing was compared")
+            continue
+        problems += [f"{repo}: {p}" for p in check(path.read_text(encoding="utf-8"))]
+    return problems
+
+
 def main(argv: list[str]) -> int:
+    if len(argv) > 1 and argv[1] == "--entry-points":
+        root = Path(argv[2] if len(argv) > 2 else ".")
+        problems = check_entry_points(root)
+        for p in problems:
+            print(f"::error::{p}")
+            print(p, file=sys.stderr)
+        if problems:
+            print(f"{len(problems)} problems across {len(ENTRY_POINTS)} entry points", file=sys.stderr)
+            return 1
+        print(f"all {len(ENTRY_POINTS)} entry points share the spine", file=sys.stderr)
+        return 0
+
     path = Path(argv[1] if len(argv) > 1 else "SKILL.md")
     if not path.exists():
         print(f"::error::{path} does not exist", file=sys.stderr)

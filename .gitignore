@@ -1,0 +1,7 @@
+# Python leaves these beside the scripts in `.github/`. One was committed, so
+# every run of `.github/tests/check-skill.test.py` on a different Python than
+# the one that wrote it produced a diff nobody meant to make — including in CI,
+# where the version is whatever `ubuntu-latest` ships. Found while working on
+# `#21`, whose whole subject is a check nobody was reading the output of.
+__pycache__/
+*.py[cod]
