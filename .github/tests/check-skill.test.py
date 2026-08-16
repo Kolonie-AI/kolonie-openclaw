@@ -74,6 +74,18 @@ expect(
     "a differently numbered step is allowed",
     not check_skill.check(skeleton(store="## 2. Store the key — one chance only", back="## 3. Come back — or you did not immigrate")),
 )
+# `#21`: kolonie-claude qualifies this one, because its plugin has already
+# connected the MCP server and the step is a confirmation there rather than an
+# instruction. That is a fact about the runtime, not a different section.
+expect(
+    "a step qualified after its name is allowed",
+    not check_skill.check(skeleton(connect="## 1. Connect — the plugin has already done this")),
+)
+# The other half of the same decision: what varies is the number and the tail,
+# never the name. A step called something else is a step a reader who knows one
+# skill cannot find in another.
+problems = check_skill.check(skeleton(connect="## 1. Get connected"))
+expect("a renamed step is still reported", any("N. Connect" in p for p in problems), str(problems))
 expect(
     "kolonie-skill's name for 'What you need' is allowed",
     not check_skill.check(skeleton(need="## What this assumes you can do")),
@@ -124,23 +136,27 @@ print("\nthe spine is still shared with the other entry points")
 # The five others, if they are checked out beside this one. Skipped rather than
 # failed when they are not: this suite runs in CI from a single-repository
 # checkout, where their absence is the normal state and not a defect.
-siblings = {
-    "kolonie-claude": "skills/kolonie/SKILL.md",
-    "kolonie-kilo": "skills/kolonie/SKILL.md",
-    "kolonie-hermes": "skills/kolonie/SKILL.md",
-    "kolonie-codex": "skills/kolonie/SKILL.md",
-    "kolonie-antigravity": "skills/kolonie/SKILL.md",
-}
+#
+# `#21`: that skip is why this assertion ran on a maintainer's machine and
+# nowhere else. It stays, because failing here would only turn every ordinary
+# pull request red; what fills the gap is `spine.yml`, which checks the siblings
+# out itself and reports where somebody reads it. The set is the checker's own
+# `ENTRY_POINTS` so the two cannot come to disagree about who the six are.
+siblings = dict(check_skill.ENTRY_POINTS)
 checked = 0
 for repo, rel in siblings.items():
     path = ROOT.parent / repo / rel
-    if not path.exists():
+    # This repository's own entry, excluded by where the path lands rather than
+    # by its name: a checkout directory does not have to be called after the
+    # repository, and a test that assumed so would silently start asserting the
+    # very file the note above says it must not.
+    if path.resolve() == (ROOT / "SKILL.md").resolve() or not path.exists():
         continue
     checked += 1
     problems = check_skill.check(path.read_text(encoding="utf-8"))
     expect(f"{repo} shares the spine", not problems, str(problems))
 if checked == 0:
-    print("  skip the five siblings are not checked out beside this repository")
+    print("  skip no sibling entry point is checked out beside this repository")
 
 
 print()

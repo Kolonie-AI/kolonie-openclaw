@@ -1,0 +1,131 @@
+name: Spine
+
+# Do the six entry-point skills still share a structure? Checked here, daily,
+# against fresh checkouts of all six.
+#
+# ## Why this is not part of `ci.yml`
+#
+# `#21`: the cross-repository assertion already existed, in
+# `.github/tests/check-skill.test.py`, and it skipped every sibling that was not
+# checked out beside this repository. In CI that is all of them — so the one
+# assertion that spans the six ran on a maintainer's machine and nowhere else,
+# and `kolonie-claude`'s heading had been failing there with nobody told.
+#
+# Making the suite fail instead would have been the wrong repair. `ci.yml` runs on
+# every pull request; a sibling rewritten in another repository would then turn
+# every pull request here red, blocking work that has nothing to do with it. A
+# schedule is the right cadence for a fact about other people's repositories, and
+# it is what `check-red-lines.yml` in `kolonie-docs` already does for the red
+# lines. The skip in the suite therefore stays exactly as it was.
+#
+# ## Why the checkouts are explicit, and the list is not here
+#
+# `uses:` cannot be looped, so the six checkout steps are written out. The set
+# itself lives once, as `ENTRY_POINTS` in `.github/scripts/check-skill.py`, and
+# `--entry-points` fails on a repository it cannot find rather than skipping it —
+# so a seventh entry point added to that list without a step added here turns this
+# red naming the file, instead of quietly checking six of seven.
+#
+# This repository is checked out twice: once as the tooling, once as one of the
+# six. Its own `SKILL.md` is checked here even though `ci.yml` checks it on every
+# push, because the spine can move under a file that was green when it landed.
+#
+# **`GITHUB_TOKEN` is enough.** All six entry-point repositories are public, so
+# reading them needs no token of anybody's, and the only write this workflow makes
+# is to its own issues.
+
+on:
+  schedule:
+    # Daily. A minute of its own, well away from `skill.yml`'s 06:41 read of
+    # kolonie-docs, so the two do not queue behind each other.
+    - cron: "23 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: spine-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  spine:
+    name: The six entry points still share a structure
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: Kolonie-AI/kolonie-openclaw
+          path: .entry-points/kolonie-openclaw
+      - uses: actions/checkout@v4
+        with:
+          repository: Kolonie-AI/kolonie-claude
+          path: .entry-points/kolonie-claude
+      - uses: actions/checkout@v4
+        with:
+          repository: Kolonie-AI/kolonie-kilo
+          path: .entry-points/kolonie-kilo
+      - uses: actions/checkout@v4
+        with:
+          repository: Kolonie-AI/kolonie-hermes
+          path: .entry-points/kolonie-hermes
+      - uses: actions/checkout@v4
+        with:
+          repository: Kolonie-AI/kolonie-codex
+          path: .entry-points/kolonie-codex
+      - uses: actions/checkout@v4
+        with:
+          repository: Kolonie-AI/kolonie-antigravity
+          path: .entry-points/kolonie-antigravity
+
+      # The checker before the check, which is `check-red-lines.yml`'s rule and
+      # `ci.yml`'s: a check nobody has seen fail correctly is a check nobody
+      # should trust when it passes. Not `continue-on-error` — a broken checker
+      # is not a finding about anybody's skill file, and filing it as one would
+      # send six maintainers to read six documents that are fine.
+      - name: Test the check
+        run: python3 .github/tests/check-skill.test.py
+
+      # The checker writes its annotations to stdout and the same findings as
+      # plain text to stderr, so the run log gets the annotations and the issue
+      # body gets prose — rather than an issue full of `::error::` prefixes that
+      # mean nothing outside a run page.
+      - name: Compare the six
+        id: compare
+        continue-on-error: true
+        run: |
+          # `set +e` because the default shell is `bash -e`: without it the
+          # non-zero exit ends the step before the report file is read out into
+          # the log, and the finding is only ever visible in the issue.
+          set +e
+          python3 .github/scripts/check-skill.py --entry-points .entry-points 2> spine-report.txt
+          status=$?
+          set -e
+          cat spine-report.txt
+          exit "$status"
+
+      - name: File it where somebody reads it
+        if: steps.compare.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash .github/scripts/spine-report.sh report spine-report.txt
+
+      - name: Close it when they agree again
+        if: steps.compare.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: bash .github/scripts/spine-report.sh resolve
+
+      # The verdict, taken after the reporting so that a failure is both filed
+      # and visible. `continue-on-error` above only defers it.
+      - name: The verdict
+        if: steps.compare.outcome == 'failure'
+        run: |
+          echo "::error::the six entry-point skills no longer share a spine — see the issue this run filed"
+          exit 1
