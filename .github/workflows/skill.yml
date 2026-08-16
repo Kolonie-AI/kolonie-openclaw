@@ -13,10 +13,20 @@ name: Skill
 #
 # ## The two jobs, and why they are two
 #
-# **`check`** runs on every pull request and answers one question: is the
-# `SKILL.md` in this tree what the body and `skill.runtime.md` generate? A hand
-# edit to the generated file is the failure this whole split exists to prevent,
-# and it is silent — the file reads as an ordinary skill to whoever installs it.
+# **`check`** runs on pull requests and on pushes to `main`, and answers one
+# question: is the `SKILL.md` in this tree what the body and `skill.runtime.md`
+# generate? A hand edit to the generated file is the failure this whole split
+# exists to prevent, and it is silent — the file reads as an ordinary skill to
+# whoever installs it.
+#
+# **It deliberately does not run on `schedule` or `workflow_dispatch`, which are
+# `sync`'s two events** (`#25`). On those, a `SKILL.md` that is behind the
+# shared body is the reason the run was asked for rather than a defect it found.
+# So `check` failed, `sync` opened the pull request that fixes it, the sweep
+# merged that a minute later, and the failure stayed on `main` for good. Measured
+# 2026-08-16 across the seven runtime repositories, 42 `Skill` runs on `main` had
+# failed: 21 on `schedule`, 19 on `workflow_dispatch` — and 2 on a push. Those
+# two are the ones this job exists for.
 #
 # **`sync`** runs on a schedule, regenerates, and opens a pull request when the
 # shared body has moved. It does **not** merge. A change to the Colony-facing text
@@ -58,6 +68,10 @@ permissions:
 jobs:
   check:
     name: SKILL.md is what the shared body generates
+    # The exact complement of `sync`'s condition below, so the two never run in
+    # the same event and never answer opposite questions about the same fact
+    # (`#25`).
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
