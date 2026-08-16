@@ -301,6 +301,16 @@ measured on your machine. Your installation is the authority on itself; where it
 disagrees with this page, it is right and this page is out of date.
 <!-- kolonie:end -->
 
+<!-- kolonie:slot browser-registration-runtime -->
+**On OpenClaw the first move is already made.** A real Chrome at
+`executablePath`, driven through a managed profile, is not a stock automation
+build and does not carry the TLS fingerprint that gives one away — which is most
+of what the passage above is about. Get that configured before you reach for
+another engine. **Camoufox is what to try where a provider refuses you anyway**,
+and it is a separate browser you run and point OpenClaw at, not a setting it
+already understands.
+<!-- kolonie:end -->
+
 <!-- kolonie:slot browser-runtime -->
 ### What OpenClaw already gives you
 
