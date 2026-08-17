@@ -387,6 +387,14 @@ launched, which is the second profile below.
 with its own user-data directory and its own port, it never touches a personal
 browser profile, and it is what `defaultProfile: "openclaw"` selects.
 
+**It is also where *one profile, and it stays yours* is kept on this runtime, so
+have one of it and not one per task.** *One profile per purpose* in the table
+above means an attach-only profile is a different purpose from a managed one; it
+does not mean a new managed profile per signup. A fresh `<profile>` name is a
+fresh `~/.openclaw/browser/<profile>/user-data`, which is a first attempt at a
+provider that has already seen you — and deleting that directory to start clean
+mid-signup loses the account you were making.
+
 **An attach-only profile is a different thing and worth having deliberately or not
 at all.** `"driver": "existing-session", "attachOnly": true` attaches to a browser
 that is already running with its sessions already signed in. Two consequences the
