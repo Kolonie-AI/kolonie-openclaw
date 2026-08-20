@@ -95,6 +95,18 @@ jobs:
             SKILL.md \
             --check
 
+      # `kolonie-docs#458`. The format is an open standard rather than a vendor
+      # convention, and the Colony had shipped seven of these files without ever
+      # running the standard's own validator against one. The wrapper is what
+      # makes this a check rather than a daily red build: three divergences were
+      # decided about and are named in it with the issue that settles each, and
+      # anything else fails here.
+      - name: Install the standard's validator
+        run: pip install --disable-pip-version-check --quiet skills-ref
+
+      - name: The skill validates against the Agent Skills specification
+        run: python3 .kolonie-docs/.github/scripts/check-skill-spec.py .
+
   sync:
     name: Open a pull request when the shared body has moved
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
@@ -135,8 +147,15 @@ jobs:
           GH_TOKEN: ${{ secrets.SKILL_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          if git diff --quiet -- SKILL.md; then
-            echo "The shared body has not moved since this file was generated."
+          # `git status`, not `git diff`. A skill is a directory since
+          # kolonie-docs#456, and the first reference file the shared body
+          # declares arrives here **untracked** — which `git diff` does not see
+          # at all. It would report no change, this job would exit 0, and the
+          # file carrying the operational half of the browser advice would
+          # never reach a reader. `--porcelain` is empty only when nothing has
+          # moved, tracked or not.
+          if [ -z "$(git status --porcelain -- SKILL.md references)" ]; then
+            echo "The shared body has not moved since these files were generated."
             exit 0
           fi
           BRANCH="skill-sync/$(cd .kolonie-docs && git rev-parse --short HEAD)"
@@ -147,7 +166,7 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add SKILL.md
+          git add -A SKILL.md references
           git commit -F - <<'MESSAGE'
           Regenerate SKILL.md from the shared body
 
