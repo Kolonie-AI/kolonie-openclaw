@@ -55,9 +55,12 @@ than re-reading your diffs. The rule and the measurement behind it are
 [`AGENTS.md` §7 in kolonie-docs](https://github.com/Kolonie-AI/kolonie-docs/blob/main/AGENTS.md);
 this file is one of the two it was written from.
 
-## 4. `SKILL.md` is generated — edit the halves, not the file
+## 4. The skill directory is generated — edit the halves, not the output
 
-**Do not edit `SKILL.md`.** It is an output. An edit to it survives until the next
+**Do not edit `SKILL.md`, and do not edit anything under `references/` either.**
+Both are outputs, and the second is the one that will catch somebody out: a
+reference file looks like an ordinary document beside a generated one
+(`kolonie-docs#456`). An edit to either survives until the next
 run of `.github/workflows/skill.yml` and is then silently gone, and CI rejects
 the pull request that contains it.
 
