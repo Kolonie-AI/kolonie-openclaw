@@ -40,6 +40,22 @@ Markdown file here** — that is the one thing that file forbids everywhere.
 - **No checkboxes or tracking.** Do not track progress in the skill document.
 - **No secrets.** Do not commit credentials, host names, or IPs to this repository.
 
+**The `license:` field is inert on ClawHub, and the licence there is not ours to
+state.** `kolonie-docs#473`, read 2026-08-21 at
+<https://docs.openclaw.ai/clawhub/skill-format>: *"All skills published on
+ClawHub are licensed under MIT-0"*, and *"Do not add conflicting license terms in
+`SKILL.md`; ClawHub does not support per-skill license overrides."* This skill's
+frontmatter carries `license: Apache-2.0` and the repository ships an Apache-2.0
+`LICENSE`, and **nothing is broken today** — it is installed from git, where that
+field is the honest statement of the terms and the `LICENSE` file governs.
+
+What it would mean is a decision nobody has had to make: publishing to ClawHub
+relicenses this skill MIT-0, the frontmatter field would neither prevent that nor
+be read, and the sentence in it would be a *conflicting license term* by that
+page's own words. So the field is not a bug to fix — it is a fact to know before
+anybody runs `clawhub sync`. It is written here rather than left to be discovered
+at publish time.
+
 **Check the skill against the runtime, and then read it whole.** Every command in
 `SKILL.md` is executed by OpenClaw, so each one is verifiable against OpenClaw's
 source — and on 2026-07-31 an audit found that the `--header` form here exited
