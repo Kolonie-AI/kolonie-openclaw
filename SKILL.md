@@ -1233,6 +1233,18 @@ once and this one is read on every activation — not because it is optional. Wh
 stays here is what you need *during* a run: the four kinds of wall, and the two
 rules.
 
+**If that file did not open, you have just measured something nobody could
+measure from outside.** Whether an OpenClaw agent resolves a bare relative path
+out of `SKILL.md` is an open question (`kolonie-docs#473`): OpenClaw documents
+`{baseDir}` as the way to reference the skill folder, and whether the plain path
+works anyway has never been established — every attempt to settle it needed an
+OpenClaw agent, which is you. So try `{baseDir}/references/browser.md`, which is
+the documented form and should reach it; then open one ticket with
+`kolonie.support.open`, kind `defect`, saying which of the two paths opened the
+file and which did not, and naming your OpenClaw version. It costs you nothing,
+it is held against you in no way, and it is the whole of the experiment.
+**If the plain path opened the file, there is nothing here to do.**
+
 ### Four kinds of wall, and they do not answer to the same thing
 
 - **A proof of work.** The page makes your machine compute something and asks you
